@@ -1,0 +1,49 @@
+@startuml
+' ============================================================
+' 图13 遛狗区预约对象 状态图
+' 优化点：提高分辨率、放大字号、分离失败分支、加大间距
+' ============================================================
+skinparam dpi 300
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 16
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam nodesep 90
+skinparam ranksep 95
+
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #2563EB
+  BorderThickness 1.8
+  FontSize 16
+  FontStyle bold
+  FontColor #1E293B
+}
+
+skinparam arrow {
+  Color #475569
+  Thickness 1.6
+  FontSize 14
+  FontColor #1E40AF
+}
+
+state "Initial\n待提交" as Initial #EFF6FF
+state "CONFIRMED\n已确认" as CONFIRMED #DCFCE7
+state "CANCELLED\n已取消" as CANCELLED #F1F5F9
+state "COMPLETED\n已完成" as COMPLETED #DBEAFE
+
+[*] --> Initial
+
+Initial -right-> CONFIRMED : 提交预约成功\n(原子扣减名额)
+Initial --> [*] : 提交失败\n(名额已被占用)
+
+CONFIRMED -down-> CANCELLED : 业主在开始前取消
+CONFIRMED -down-> COMPLETED : 预约时段到达
+
+CANCELLED --> [*]
+COMPLETED --> [*]
+
+' 强制"已取消"在左、"已完成"在右
+CANCELLED -[hidden]right-> COMPLETED
+
+@enduml

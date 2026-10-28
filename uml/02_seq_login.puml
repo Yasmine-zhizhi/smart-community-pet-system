@@ -1,0 +1,27 @@
+@startuml
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam sequence {
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #EAF2F8
+    ActorBorderColor Black
+}
+
+actor "业主" as Owner
+participant "LoginUI" as UI
+participant "OwnerManager" as Ctrl
+participant "OwnerLib" as Lib
+participant "消息平台" as MSG
+
+Owner -> UI : 输入手机号\n点击获取验证码
+UI -> MSG : 发送验证码请求
+MSG --> UI : 返回验证码
+UI -> Ctrl : register(phone, code, password)
+Ctrl -> Ctrl : checkInputValidity()
+Ctrl -> Lib : isExist(phone)
+Lib --> Ctrl : false
+Ctrl -> Lib : createOwner(phone, password)
+Lib --> Ctrl : 成功
+Ctrl --> UI : 注册成功
+UI --> Owner : 显示注册成功
+@enduml

@@ -1,0 +1,16 @@
+@startuml
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor "物业管理员" as Admin
+participant "SettingUI" as UI
+participant "SystemManager" as Ctrl
+participant "SystemParameter" as SP
+
+Admin -> UI : 修改开放时间/容量/提醒天数
+UI -> Ctrl : setParameter(key, value)
+Ctrl -> SP : update(key, value)
+SP --> Ctrl : 更新成功
+Ctrl --> UI : 设置成功
+UI --> Admin : 显示参数已更新
+@enduml

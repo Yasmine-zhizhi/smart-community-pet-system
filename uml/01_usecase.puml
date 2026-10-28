@@ -1,0 +1,103 @@
+@startuml
+' ============================================================
+' 图1  智慧社区宠物管理系统 用例图
+' 优化点：提高分辨率、放大字号、按业务分组消除交叉线
+' ============================================================
+skinparam dpi 300
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 16
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam actorStyle awesome
+skinparam nodesep 30
+skinparam ranksep 55
+
+skinparam usecase {
+  BackgroundColor #EFF6FF
+  BorderColor #2563EB
+  BorderThickness 1.6
+  FontSize 15
+  FontColor #1E293B
+}
+
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #2563EB
+  BorderThickness 1.6
+  FontSize 15
+}
+
+skinparam rectangle {
+  BackgroundColor #FFFFFF
+  BorderColor #64748B
+  BorderThickness 1.8
+  FontSize 18
+  FontStyle bold
+  FontColor #1E3A8A
+}
+
+skinparam package {
+  BackgroundColor #F8FAFC
+  BorderColor #CBD5E1
+  FontSize 14
+  FontStyle bold
+  FontColor #475569
+}
+
+left to right direction
+
+actor "业主\nOwner" as Owner
+actor "物业审核员\nReviewer" as Reviewer
+actor "物业管理员\nAdministrator" as Admin
+
+rectangle "智慧社区宠物管理系统" {
+
+  package "业主自助业务" {
+    usecase "UC-LOGIN\n业主注册与登录" as UC_LOGIN
+    usecase "UC-RES-DOG\n提交犬类登记申请" as UC_DOG
+    usecase "UC-RES-CAT\n提交猫类登记申请" as UC_CAT
+    usecase "UC-QUERY\n查询档案与电子证" as UC_QUERY
+    usecase "UC-RENEW\n提交年审申请" as UC_RENEW
+    usecase "UC-RESERVE\n预约遛狗区" as UC_RESERVE
+    usecase "UC-CANCEL\n取消预约" as UC_CANCEL
+  }
+
+  package "物业审核业务" {
+    usecase "UC-REVIEW\n审核登记/年审申请" as UC_REVIEW
+  }
+
+  package "物业管理业务" {
+    usecase "UC-MANAGE\n违规管理与系统设置" as UC_MANAGE
+  }
+
+  package "内部扩展用例" {
+    usecase "UC-CHECK\n校验材料完整性" as UC_CHECK
+    usecase "UC-WAITLIST\n加入候补名单" as UC_WAITLIST
+  }
+}
+
+package "外部系统" {
+  actor "外部消息平台\nMessagePlatform" as MSG
+}
+
+Owner --> UC_LOGIN
+Owner --> UC_DOG
+Owner --> UC_CAT
+Owner --> UC_QUERY
+Owner --> UC_RENEW
+Owner --> UC_RESERVE
+Owner --> UC_CANCEL
+
+Reviewer --> UC_REVIEW
+Admin --> UC_MANAGE
+
+UC_DOG ..> UC_CHECK : <<include>>
+UC_CAT ..> UC_CHECK : <<include>>
+UC_WAITLIST ..> UC_RESERVE : <<extend>>
+
+UC_REVIEW ..> MSG : 推送结果
+UC_RENEW ..> MSG : 年审提醒
+UC_RESERVE ..> MSG : 预约通知
+UC_WAITLIST ..> MSG : 候补通知
+
+@enduml

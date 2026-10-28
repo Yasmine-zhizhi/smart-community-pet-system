@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>犬类登记申请 · 智慧社区宠物管理系统</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="container-narrow">
+  <h1 style="font-size:24px;font-weight:700;margin-bottom:6px">🐕 提交犬类登记申请</h1>
+  <p class="text-gray" style="margin-bottom:28px">请填写犬只信息并上传必要的证明材料。物业审核通过后将自动生成电子宠物证。</p>
+
+  <form id="dogForm" onsubmit="return false" class="card">
+    <h3 class="card-title" style="margin-bottom:20px">宠物基本信息</h3>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">宠物名称 <span class="required">*</span></label>
+        <input class="form-input" name="petName" placeholder="例如：豆豆" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">品种 <span class="required">*</span></label>
+        <input class="form-input" name="breed" placeholder="例如：金毛寻回犬" required>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">体型 <span class="required">*</span></label>
+        <select class="form-select" name="size" required>
+          <option value="">请选择</option>
+          <option value="SMALL">小型犬（肩高≤40cm，可进入小型犬区）</option>
+          <option value="LARGE">大型犬（肩高>40cm，只能进入大型犬区）</option>
+        </select>
+        <div class="form-hint">犬类体型将决定可预约的遛狗区域</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">疫苗有效期 <span class="required">*</span></label>
+        <input class="form-input" type="date" name="vaccineExpiry" required>
+      </div>
+    </div>
+
+    <h3 class="card-title" style="margin:28px 0 16px">证明材料 <span class="required" style="color:var(--danger);font-size:14px">*</span></h3>
+    <p class="text-gray" style="font-size:13px;margin-bottom:16px">请上传清晰的照片或扫描件（JPG/PNG，单张不超过 10MB）</p>
+
+    <div class="form-group">
+      <label class="form-label">犬只登记证明 <span class="required">*</span></label>
+      <div class="upload-box" id="upload-dogcert">
+        <input type="file" id="f-dogcert" accept="image/*" hidden onchange="handleUpload('dogcert')">
+        <div class="up-icon">📄</div>
+        <div>点击上传或拖拽文件到此处</div>
+        <div class="text-gray" style="font-size:12px">必填 · 犬只登记证明照片</div>
+      </div>
+      <div class="form-error" id="err-dogcert" style="display:none">请上传犬只登记证明</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">疫苗材料 <span class="required">*</span></label>
+      <div class="upload-box" id="upload-vaccine">
+        <input type="file" id="f-vaccine" accept="image/*" hidden onchange="handleUpload('vaccine')">
+        <div class="up-icon">💉</div>
+        <div>点击上传或拖拽文件到此处</div>
+        <div class="text-gray" style="font-size:12px">必填 · 狂犬疫苗接种证明</div>
+      </div>
+      <div class="form-error" id="err-vaccine" style="display:none">请上传疫苗材料</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">补充说明（可选）</label>
+      <textarea class="form-textarea" name="remark" placeholder="如有特殊情况请在此说明..."></textarea>
+    </div>
+
+    <div class="flex gap-12" style="margin-top:24px">
+      <button type="button" class="btn btn-outline" style="flex:1" onclick="history.back()">取消</button>
+      <button type="button" class="btn btn-primary" style="flex:2" onclick="submitDogReg()">提 交 申 请</button>
+    </div>
+  </form>
+</div>
+
+<style>
+.upload-box {
+  border: 2px dashed var(--gray-300); border-radius: var(--radius);
+  padding: 32px; text-align: center; cursor: pointer;
+  transition: all 0.15s; color: var(--gray-500); font-size: 14px;
+  background: var(--gray-50);
+}
+.upload-box:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+.upload-box.uploaded { border-color: var(--success); background: #DCFCE7; color: var(--success); }
+.up-icon { font-size: 28px; margin-bottom: 8px; }
+</style>
+
+<script src="js/app.js"></script>
+<script>
+injectNavbar('owner');
+
+const uploaded = { dogcert: false, vaccine: false };
+
+function handleUpload(key) {
+  const box = document.getElementById('upload-' + key);
+  const err = document.getElementById('err-' + key);
+  const f = document.getElementById('f-' + key);
+  if (f.files && f.files.length) {
+    uploaded[key] = true;
+    box.classList.add('uploaded');
+    box.innerHTML = `<div class="up-icon">✅</div><div>已上传：${f.files[0].name}</div><div style="font-size:12px;margin-top:4px">点击可重新选择</div>`;
+    err.style.display = 'none';
+  }
+}
+
+document.getElementById('upload-dogcert').onclick = () => document.getElementById('f-dogcert').click();
+document.getElementById('upload-vaccine').onclick  = () => document.getElementById('f-vaccine').click();
+
+function submitDogReg() {
+  if (!validateForm(document.getElementById('dogForm'))) { showToast('请先填写完整信息', 'danger'); return; }
+  let ok = true;
+  if (!uploaded.dogcert)  { document.getElementById('err-dogcert').style.display='block'; ok=false; }
+  if (!uploaded.vaccine)  { document.getElementById('err-vaccine').style.display='block'; ok=false; }
+  if (!ok) { showToast('请上传所有必填材料', 'danger'); return; }
+
+  const f = document.getElementById('dogForm');
+  submitRegistration('DOG', f.petName.value, f.breed.value, f.size.value);
+  showModal('提交成功！', `您的犬类登记申请已提交<br>当前状态：<strong style="color:var(--warning)">📋 待审核</strong><br><br>物业将在 1-3 个工作日内完成审核，结果将通过消息通知告知您。<br><em style="color:var(--gray-500);font-size:12px">(数据已持久化，切换到物业端可看到新申请)</em>`,
+    () => location.href = 'owner-profile.html', '查看宠物档案');
+}
+</script>
+</body>
+</html>

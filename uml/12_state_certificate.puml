@@ -1,0 +1,59 @@
+@startuml
+' ============================================================
+' 图12 宠物电子证对象 状态图
+' 优化点：提高分辨率、放大字号、加大节点/层级间距、
+'         合并重复的"注销→结束"边以消除中央标签堆叠
+' ============================================================
+skinparam dpi 300
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 16
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam nodesep 90
+skinparam ranksep 100
+
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #2563EB
+  BorderThickness 1.8
+  FontSize 16
+  FontStyle bold
+  FontColor #1E293B
+  AttributeFontSize 13
+  AttributeFontColor #475569
+}
+
+skinparam arrow {
+  Color #475569
+  Thickness 1.6
+  FontSize 14
+  FontColor #1E40AF
+}
+
+state "Initial\n已提交" as Initial #EFF6FF
+state "VALID\n电子证有效" as VALID #DCFCE7
+state "EXPIRED\n已过期" as EXPIRED #FEF3C7
+state "FROZEN\n已冻结" as FROZEN #FEE2E2
+state "INVALID\n已失效" as INVALID #F1F5F9
+
+[*] --> Initial
+
+Initial --> VALID : 审核通过
+VALID --> VALID : 年审通过\n(有效期顺延365天)
+VALID --> EXPIRED : 有效期届满\n且未完成年审
+VALID --> FROZEN : 近365天\n违规达3次
+VALID --> INVALID : 审核驳回 / 注销
+
+EXPIRED --> VALID : 补交年审\n审核通过
+EXPIRED --> INVALID : 注销
+
+FROZEN --> VALID : 管理员解除冻结\n(整改通过)
+FROZEN --> INVALID : 注销
+
+INVALID --> [*]
+
+' 强制三个中间状态位于同一层级，避免斜线横穿
+EXPIRED -[hidden]right-> FROZEN
+FROZEN -[hidden]right-> INVALID
+
+@enduml

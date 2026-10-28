@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>违规管理 · 智慧社区宠物管理系统</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="container">
+  <div class="card-header">
+    <div>
+      <h1 style="font-size:24px;font-weight:700;margin-bottom:4px">⚠️ 违规管理</h1>
+      <p class="text-gray" style="font-size:14px">人工确认违规，累计近 365 天违规达 3 次自动冻结电子证</p>
+    </div>
+    <button class="btn btn-primary" onclick="showAdd()">+ 新增违规记录</button>
+  </div>
+
+  <!-- 冻结宠物提醒 -->
+  <div class="card" style="border-color:var(--danger);background:#FEF2F2;margin-bottom:20px" id="frozenBar"></div>
+
+  <!-- 违规记录 -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>记录编号</th><th>业主</th><th>宠物</th><th>违规类型</th><th>日期</th><th>状态</th><th>操作</th></tr>
+      </thead>
+      <tbody id="vBody"></tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:24px">
+    <h3 style="font-size:16px;font-weight:600;margin-bottom:12px">📋 规则说明</h3>
+    <ul style="color:var(--gray-600);font-size:13px;line-height:1.8;padding-left:20px">
+      <li>违规类型包括：未牵绳遛狗、大型犬进入小型犬区、小型犬进入大型犬区、未及时清理粪便、扰民投诉等</li>
+      <li>系统自动统计每只宠物近 <strong>365 天</strong>内的违规次数</li>
+      <li>违规累计达 <strong>3 次</strong> 时系统自动冻结电子证，冻结期间不能新增预约</li>
+      <li>年审通过 <strong>不</strong> 自动解除冻结</li>
+      <li>管理员核实整改后，可手动解除冻结</li>
+    </ul>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+injectNavbar('reviewer');
+
+function render() {
+  const d = data();
+  // 冻结宠物提醒条（动态）
+  const frozen = d.pets.filter(p => p.certStatus === 'FROZEN');
+  document.getElementById('frozenBar').innerHTML = frozen.length === 0
+    ? '<div class="flex justify-between items-center"><div><div style="font-size:16px;font-weight:600;color:var(--success)">✅ 当前没有被冻结的宠物</div></div></div>'
+    : frozen.map(p => `
+      <div class="flex justify-between items-center" style="margin-bottom:10px">
+        <div>
+          <div style="font-size:16px;font-weight:600;color:var(--danger)">🔒 被冻结的宠物：${p.name}（${p.breed}）</div>
+          <div class="text-gray" style="font-size:13px;margin-top:4px">近 365 天违规 ${p.violations365} 次，电子证已冻结，不能新增预约</div>
+        </div>
+        <button class="btn btn-success btn-sm" onclick="doUnfreeze('${p.id}')">解除冻结</button>
+      </div>
+    `).join('');
+
+  // 违规记录列表
+  document.getElementById('vBody').innerHTML = d.violations.map(v => `
+    <tr>
+      <td style="font-weight:500;font-family:monospace">${v.id}</td>
+      <td>${v.owner}</td>
+      <td>${v.pet}</td>
+      <td>${v.type}</td>
+      <td>${v.date}</td>
+      <td><span class="badge badge-danger">已确认</span></td>
+      <td>
+        <button class="btn btn-outline btn-sm">查看详情</button>
+        <button class="btn btn-danger btn-sm" style="margin-left:4px">撤销</button>
+      </td>
+    </tr>`).join('');
+}
+
+function doUnfreeze(petId) {
+  const pet = data().pets.find(p => p.id === petId);
+  showModal('解除冻结？', `确认「${pet.name}」已整改完毕，解除冻结后可重新预约遛狗区。`,
+    () => { unfreezePet(petId); render(); }, '确认解除');
+}
+
+function showAdd() {
+  showModal('新增违规记录', '请填写违规信息（业主、宠物、类型、时间）。系统将自动统计近 365 天违规次数并触发冻结判断。<br><br><em style="color:var(--gray-500);font-size:12px">演示模式：点击确认将以"旺财 + 未及时清理粪便"为例新增一条违规。</em>',
+    () => {
+      recordViolation({ owner: '王先生', pet: '旺财', petName: '旺财', type: '未及时清理粪便', date: fmtDate(new Date()) });
+      render();
+    }, '确认提交');
+}
+render();
+</script>
+</body>
+</html>

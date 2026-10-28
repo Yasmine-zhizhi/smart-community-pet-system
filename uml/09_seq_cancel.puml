@@ -1,0 +1,37 @@
+@startuml
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor "业主" as Owner
+actor "物业管理员" as Admin
+participant "ReserveUI" as RUI
+participant "ViolationUI" as VUI
+participant "ReserveManager" as Ctrl
+participant "ReserveLib" as RLib
+participant "SystemManager" as SM
+participant "ViolationLib" as VLib
+participant "PetLib" as PLib
+
+== 业主取消预约 ==
+Owner -> RUI : 选择预约记录点击取消
+RUI -> Ctrl : cancel(reservationId)
+Ctrl -> RLib : getById(reservationId)
+RLib --> Ctrl : 未开始
+Ctrl -> RLib : updateStatus(CANCELLED) + 释放名额
+Ctrl --> RUI : 取消成功
+RUI --> Owner : 显示预约已取消
+
+== 管理员确认违规 ==
+Admin -> VUI : 新增违规记录
+VUI -> SM : addViolation(ownerId, petId, type)
+SM -> VLib : createRecord(ownerId, petId, type)
+VLib --> SM : 记录成功
+SM -> VLib : count365Days(ownerId, petId)
+VLib --> SM : 违规次数
+alt 次数>=3
+    SM -> PLib : freezeCertificate(petId)
+    PLib --> SM : 已冻结
+end
+SM --> VUI : 处理完成
+VUI --> Admin : 显示违规处理结果
+@enduml

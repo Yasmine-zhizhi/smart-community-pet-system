@@ -1,0 +1,21 @@
+@startuml
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor "业主" as Owner
+participant "CatRegisterUI" as UI
+participant "PetManager" as Ctrl
+participant "PetLib" as Lib
+
+Owner -> UI : 填写猫类信息\n上传近期照片+疫苗材料
+UI -> Ctrl : submitCatRegistration(info, materials)
+activate Ctrl
+Ctrl -> Ctrl : 校验材料完整性 <<include>>
+Ctrl -> Lib : createApplication(CAT, info, materials)
+activate Lib
+Lib --> Ctrl : 返回申请编号 + "待审核"状态
+deactivate Lib
+Ctrl --> UI : 提交成功 + 申请编号
+deactivate Ctrl
+UI --> Owner : 显示提交成功
+@enduml

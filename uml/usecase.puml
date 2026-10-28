@@ -1,0 +1,66 @@
+@startuml
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam usecase {
+    BackgroundColor<<include>> #LightBlue
+    BackgroundColor<<extend>> #LightGreen
+    BorderColor Black
+    ArrowColor Black
+}
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam shadowing false
+
+actor "业主" as Owner
+actor "物业审核员" as Reviewer
+actor "物业管理员" as Admin
+rectangle "智慧社区宠物管理系统" {
+    usecase "业主注册与登录" as UC_LOGIN
+    package "登记申请（犬类）" {
+        usecase "提交犬类登记申请" as UC_DOG
+    }
+    package "登记申请（猫类）" {
+        usecase "提交猫类登记申请" as UC_CAT
+    }
+    package "登记申请（抽象）" {
+        usecase "校验材料完整性" as UC_CHECK
+    }
+    usecase "审核登记/年审申请" as UC_REVIEW
+    usecase "查询宠物档案与电子证" as UC_QUERY
+    usecase "提交年审申请" as UC_RENEW
+    usecase "预约遛狗区" as UC_RESERVE
+    usecase "加入候补名单" as UC_WAITLIST
+    usecase "取消预约" as UC_CANCEL
+    usecase "违规管理与系统设置" as UC_MANAGE
+}
+rectangle "外部消息平台" as MSG
+
+Owner --> UC_LOGIN
+Owner --> UC_DOG
+Owner --> UC_CAT
+Owner --> UC_QUERY
+Owner --> UC_RENEW
+Owner --> UC_RESERVE
+Owner --> UC_CANCEL
+
+Reviewer --> UC_REVIEW
+
+Admin --> UC_MANAGE
+
+UC_DOG .> UC_CHECK : <<include>>
+UC_CAT .> UC_CHECK : <<include>>
+UC_WAITLIST .> UC_RESERVE : <<extend>>
+
+UC_DOG --|> UC_QUERY
+UC_CAT --|> UC_QUERY
+
+UC_REVIEW ..> MSG : 推送结果
+UC_RESERVE ..> MSG : 预约通知
+UC_WAITLIST ..> MSG : 候补通知
+UC_RENEW ..> MSG : 年审提醒
+
+@enduml

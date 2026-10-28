@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>年审申请 · 智慧社区宠物管理系统</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="container-narrow">
+  <h1 style="font-size:24px;font-weight:700;margin-bottom:6px">🔄 提交年审申请</h1>
+  <p class="text-gray" style="margin-bottom:28px">电子证到期前 30 天自动提醒。年审审核通过后，有效期自原到期日顺延 365 天。</p>
+
+  <div id="renewList"></div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+injectNavbar('owner');
+
+function daysBetween(d1, d2) { return Math.round((new Date(d2) - new Date(d1)) / 86400000); }
+
+function render() {
+  const today = fmtDate(new Date());
+  document.getElementById('renewList').innerHTML = data().pets.map(p => {
+    const daysLeft = daysBetween(today, p.certExpiry);
+    const canRenew = daysLeft <= 30;
+    const urgent = daysLeft < 7;
+    const expired = daysLeft < 0;
+    return `
+      <div class="card" style="margin-bottom:20px">
+        <div class="flex justify-between items-center">
+          <div>
+            <div style="font-size:18px;font-weight:600">${p.type==='DOG'?'🐕':'🐈'} ${p.name} · ${p.breed}</div>
+            <div class="text-gray" style="font-size:13px;margin-top:4px">
+              电子证有效期：${p.certExpiry} · 剩余 ${Math.max(0,daysLeft)} 天
+              <span class="badge ${urgent?'badge-danger':canRenew?'badge-warning':'badge-success'}" style="margin-left:8px">
+                ${expired?'已过期':daysLeft<=7?'即将到期':daysLeft<=30?'临近到期':'状态良好'}
+              </span>
+            </div>
+          </div>
+          ${canRenew ? `<button class="btn btn-primary" onclick="openRenewForm('${p.id}')">立即年审</button>`
+                    : `<span class="text-gray" style="font-size:13px">到期前 30 天开放年审</span>`}
+        </div>
+        ${canRenew ? `<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--gray-200)">
+          <div style="color:var(--gray-600);font-size:13px;margin-bottom:12px">📋 年审说明：需更新疫苗有效期并上传新的疫苗材料</div>
+        </div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function openRenewForm(petId) {
+  const pet = data().pets.find(p => p.id === petId);
+  showModal(`为「${pet.name}」提交年审`, `请更新疫苗有效期并上传新的疫苗材料（与登记要求相同）。审核通过后，电子证有效期将顺延 365 天。<br><br><em style="color:var(--gray-500);font-size:12px">(提交后数据持久化，切换到物业端可看到年审申请)</em>`,
+    () => { submitRenewal(petId); render(); }, '确认提交');
+}
+render();
+</script>
+</body>
+</html>

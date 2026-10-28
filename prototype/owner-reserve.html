@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>遛狗区预约 · 智慧社区宠物管理系统</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="container">
+  <div class="card-header">
+    <div>
+      <h1 style="font-size:24px;font-weight:700;margin-bottom:4px">🐕 预约遛狗区</h1>
+      <p class="text-gray" style="font-size:14px">开放时间 07:00—21:00 · 每时段 30 分钟 · 小型犬区容量 10 只 · 大型犬区容量 6 只</p>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- 左：选择区 -->
+    <div>
+      <!-- 选择宠物 -->
+      <div class="card" style="margin-bottom:20px">
+        <h3 class="card-title">1. 选择宠物</h3>
+        <div id="petChooser" class="flex gap-12" style="flex-wrap:wrap"></div>
+        <div id="petAlert" style="margin-top:12px"></div>
+      </div>
+
+      <!-- 选择日期 -->
+      <div class="card" style="margin-bottom:20px">
+        <h3 class="card-title">2. 选择日期</h3>
+        <div id="dateTabs" class="date-tabs"></div>
+      </div>
+
+      <!-- 选择区域 -->
+      <div class="card" style="margin-bottom:20px">
+        <h3 class="card-title">3. 选择区域</h3>
+        <div class="flex gap-12" style="flex-wrap:wrap">
+          <button class="zone-pill" data-zone="SMALL_DOG" onclick="selectZone(this)">
+            🐩 小型犬遛狗区 · 容量 10 只
+          </button>
+          <button class="zone-pill" data-zone="LARGE_DOG" onclick="selectZone(this)">
+            🐕 大型犬遛狗区 · 容量 6 只
+          </button>
+        </div>
+        <div class="form-hint" id="zoneHint" style="margin-top:10px"></div>
+      </div>
+
+      <!-- 选择时段 -->
+      <div class="card">
+        <h3 class="card-title">4. 选择时段</h3>
+        <div id="slotGrid" class="slot-grid"></div>
+        <div class="text-gray" style="font-size:12px;margin-top:12px">灰色表示该时段已满额</div>
+      </div>
+    </div>
+
+    <!-- 右：确认区 -->
+    <div>
+      <div class="card" style="position:sticky;top:90px">
+        <h3 class="card-title">预约确认</h3>
+        <div style="font-size:14px;line-height:2">
+          <div class="flex justify-between"><span class="text-gray">宠物</span><strong id="cf-pet">— 请选择宠物 —</strong></div>
+          <div class="flex justify-between"><span class="text-gray">日期</span><strong id="cf-date">— 请选择日期 —</strong></div>
+          <div class="flex justify-between"><span class="text-gray">区域</span><strong id="cf-zone">— 请选择区域 —</strong></div>
+          <div class="flex justify-between"><span class="text-gray">时段</span><strong id="cf-slot">— 请选择时段 —</strong></div>
+          <div class="flex justify-between"><span class="text-gray">当前剩余</span><strong id="cf-left" class="text-primary">—</strong></div>
+        </div>
+        <button class="btn btn-primary btn-lg btn-block" style="margin-top:20px" onclick="doReserve()">
+          🐾 确认预约
+        </button>
+        <div style="margin-top:12px;text-align:center">
+          <a href="owner-my-reservations.html" class="text-gray" style="font-size:13px">查看我的预约 →</a>
+        </div>
+      </div>
+
+      <!-- 规则 -->
+      <div class="card" style="margin-top:20px">
+        <h3 class="card-title">⚠️ 预约须知</h3>
+        <ul style="color:var(--gray-600);font-size:13px;padding-left:20px;line-height:1.8">
+          <li>只能预约对应体型区域，不能进入不匹配的犬区</li>
+          <li>同一犬只同一时段不能重复预约</li>
+          <li>预约操作是原子的，名额瞬时扣减</li>
+          <li>时段满额可加入候补，但候补成功 ≠ 预约成功</li>
+          <li>预约开始前可取消，取消后名额自动释放</li>
+          <li>电子证过期/冻结期间不可预约</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+injectNavbar('owner');
+
+let state = { petId: null, date: null, zone: null, slot: null };
+const dates = genDates(5);
+
+// 渲染宠物选择
+function renderPetChooser() {
+  const el = document.getElementById('petChooser');
+  el.innerHTML = data().pets.map(p => {
+    const disabled = p.certStatus !== 'VALID';
+    const emoji = p.type==='DOG'?'🐕':'🐈';
+    const statusCls = certStatusBadge(p.certStatus);
+    return `
+      <label style="cursor:${disabled?'not-allowed':'pointer'};opacity:${disabled?0.5:1};flex:1;min-width:200px">
+        <div class="card" style="padding:16px;margin:0;border:2px solid ${state.petId===p.id?'var(--primary)':'var(--gray-200)'};background:${state.petId===p.id?'var(--primary-light)':'var(--white)'}">
+          <input type="radio" name="pet" value="${p.id}" ${state.petId===p.id?'checked':''} ${disabled?'disabled':''} style="display:none" onchange="selectPet('${p.id}')">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="font-size:28px">${emoji}</div>
+            <div>
+              <div style="font-weight:600">${p.name} · ${p.breed}</div>
+              <div style="font-size:12px"><span class="badge ${statusCls}">${certStatusLabel(p.certStatus)}</span></div>
+            </div>
+          </div>
+        </div>
+      </label>
+    `;
+  }).join('');
+}
+
+// 渲染日期
+function renderDateTabs() {
+  document.getElementById('dateTabs').innerHTML = dates.map((d,i) => `
+    <div class="date-tab ${state.date===d.date?'selected':''}" onclick="selectDate('${d.date}')">
+      <div class="dow">${d.dow}</div><div class="d">${d.d}</div>
+    </div>`).join('');
+}
+
+// 渲染时段（带名额）
+function renderSlots() {
+  const grid = document.getElementById('slotGrid');
+  if (!state.date || !state.zone) {
+    grid.innerHTML = '<p class="text-gray" style="grid-column:1/-1;text-align:center;padding:20px">请先选择日期和区域</p>';
+    return;
+  }
+  grid.innerHTML = timeSlots.map(slot => {
+    const info = getSlotAvailability(state.date, slot, state.zone);
+    const full = info.left === 0;
+    const sel = state.slot === slot;
+    return `<button class="slot-btn ${full?'full':''} ${sel?'selected':''}" onclick="${full?'':`selectSlot('${slot}')`}">
+      <div class="slot-time">${slot}</div>
+      <div class="slot-left">${full?'已满额':'剩余 '+info.left+'/'+info.cap}</div>
+    </button>`;
+  }).join('');
+}
+
+// 更新预约确认面板
+function updateConfirm() {
+  const pet = data().pets.find(p => p.id === state.petId);
+  document.getElementById('cf-pet').textContent = pet ? `${pet.name}（${pet.breed}）` : '— 请选择宠物 —';
+  document.getElementById('cf-date').textContent = state.date ? state.date : '— 请选择日期 —';
+  const zoneMap = { SMALL_DOG: '小型犬遛狗区', LARGE_DOG: '大型犬遛狗区' };
+  document.getElementById('cf-zone').textContent = state.zone ? zoneMap[state.zone] : '— 请选择区域 —';
+  document.getElementById('cf-slot').textContent = state.slot ? state.slot : '— 请选择时段 —';
+  if (state.date && state.zone && state.slot) {
+    const info = getSlotAvailability(state.date, state.slot, state.zone);
+    document.getElementById('cf-left').textContent = info.left + ' / ' + info.cap;
+    document.getElementById('cf-left').className = info.left <= 2 ? 'text-warning' : 'text-primary';
+  }
+}
+
+// 事件处理
+function selectPet(id) {
+  const p = data().pets.find(x => x.id === id);
+  state.petId = id;
+  renderPetChooser();
+  // 自动匹配区域
+  if (p.type === 'DOG') {
+    state.zone = p.size;
+  } else {
+    state.zone = null; // 猫类不限制区域
+  }
+  document.querySelectorAll('.zone-pill').forEach(el => {
+    el.classList.toggle('selected', el.dataset.zone === state.zone);
+    // 犬类不能进入错误区域
+    if (p.type === 'DOG' && p.size !== el.dataset.zone) {
+      el.classList.add('disabled');
+    } else {
+      el.classList.remove('disabled');
+    }
+  });
+  // 体型匹配提示
+  const hint = p.type === 'DOG' ? `该犬只属于 <strong>${sizeLabel(p.size)}</strong>，已自动匹配对应遛狗区，不可进入不匹配区域` : '猫类可选择任一区域';
+  document.getElementById('zoneHint').innerHTML = hint;
+  // 证件状态提示
+  const alert = document.getElementById('petAlert');
+  if (p.certStatus === 'EXPIRED')  alert.innerHTML = '<span class="badge badge-warning">⚠️ 电子证已过期，暂不能预约</span>';
+  else if (p.certStatus === 'FROZEN') alert.innerHTML = '<span class="badge badge-danger">🔒 电子证已冻结，暂不能预约</span>';
+  else alert.innerHTML = '<span class="badge badge-success">✅ 电子证有效，可以预约</span>';
+  renderSlots(); updateConfirm();
+}
+function selectDate(d) { state.date = d; renderDateTabs(); renderSlots(); updateConfirm(); }
+function selectZone(el) {
+  if (el.classList.contains('disabled')) { showToast('体型不匹配，不能进入该区域', 'warning'); return; }
+  document.querySelectorAll('.zone-pill').forEach(x => x.classList.remove('selected'));
+  el.classList.add('selected');
+  state.zone = el.dataset.zone;
+  renderSlots(); updateConfirm();
+}
+function selectSlot(s) {
+  state.slot = s;
+  document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+  event.target.closest('.slot-btn').classList.add('selected');
+  updateConfirm();
+}
+
+// 确认预约
+function doReserve() {
+  if (!state.petId || !state.date || !state.zone || !state.slot) {
+    showToast('请完成所有选择', 'danger'); return;
+  }
+  const pet = data().pets.find(p => p.id === state.petId);
+  if (pet.certStatus !== 'VALID') { showToast('电子证状态异常，不能预约', 'danger'); return; }
+  // 区域匹配检查
+  if (pet.type === 'DOG' && pet.size !== state.zone) {
+    showToast('该犬只不属于所选区域', 'danger'); return;
+  }
+  const info = getSlotAvailability(state.date, state.slot, state.zone);
+  if (info.left === 0) {
+    // ★ 扩展：满额时询问是否候补
+    showModal('该时段已满额', `时段 <strong>${state.slot}</strong> 目前已满额，<br>您可以选择加入候补名单，也可以更换其他时段。<br><br><em style="color:var(--gray-500);font-size:12px">注意：候补成功 ≠ 预约成功。释放名额时系统将按候补顺序通知您，您需要重新提交预约。</em>`,
+      () => { showToast('已加入候补名单，等待名额释放通知', 'success'); }, '加入候补', '更换时段');
+    return;
+  }
+
+  // 原子扣减（持久化到 localStorage）
+  showModal('确认预约？', `<strong>${pet.name}</strong> · <strong>${state.date} ${state.slot}</strong><br>区域：${state.zone==='LARGE_DOG'?'大型犬遛狗区':'小型犬遛狗区'}<br><em style="color:var(--gray-500);font-size:12px">点击确认后名额将被原子扣减，开始前可随时取消</em>`,
+    () => {
+      const res = makeReservation(state.petId, state.date, state.slot, state.zone);
+      if (res === true) {
+        setTimeout(() => { state = { petId: null, date: null, zone: null, slot: null }; renderPetChooser(); renderDateTabs(); renderSlots(); updateConfirm(); }, 1000);
+      }
+    }, '确认预约');
+}
+
+// 初始化
+renderPetChooser();
+renderDateTabs();
+selectDate(dates[1].date); // 默认选明天
+</script>
+</body>
+</html>

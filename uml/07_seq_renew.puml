@@ -1,0 +1,25 @@
+@startuml
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor "业主" as Owner
+participant "RenewUI" as UI
+participant "PetManager" as Ctrl
+participant "PetLib" as Lib
+participant "Reviewer" as Reviewer
+participant "消息平台" as MSG
+
+MSG -> Owner : 年审提醒消息（到期前30天）
+Owner -> UI : 进入年审入口\n更新疫苗有效期+上传新材料
+UI -> Ctrl : submitRenewal(petId, newVaccine, materials)
+Ctrl -> Ctrl : 校验材料完整性 <<include>>
+Ctrl -> Lib : createRenewApplication(petId, newVaccine, materials)
+Lib --> Ctrl : "年审审核中"状态
+Ctrl --> UI : 提交成功
+UI --> Owner : 显示年审申请已提交
+
+Reviewer -> UI : 审核通过
+UI -> Ctrl : approveRenewal(appId)
+Ctrl -> Lib : extendCertificate(petId, 顺延365天)
+Lib --> Ctrl : 成功
+@enduml

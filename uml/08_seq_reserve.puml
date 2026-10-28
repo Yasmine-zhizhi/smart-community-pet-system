@@ -1,0 +1,41 @@
+@startuml
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor "业主" as Owner
+participant "ReserveUI" as UI
+participant "ReserveManager" as Ctrl
+participant "PetLib" as PetLib
+participant "ReserveLib" as Lib
+participant "WaitlistLib" as WL
+participant "消息平台" as MSG
+
+Owner -> UI : 选择宠物+日期+时段+区域
+UI -> Ctrl : reserve(petId, date, timeSlot, zone)
+activate Ctrl
+Ctrl -> PetLib : getCertificate(petId)
+PetLib --> Ctrl : 有效且未冻结
+Ctrl -> Lib : checkAvailability(date, timeSlot, zone)
+alt 有名额
+    Lib --> Ctrl : 剩余>0
+    Ctrl -> Lib : createReservation() 原子扣减
+    Lib --> Ctrl : 预约编号
+    Ctrl -> MSG : 预约成功通知
+    Ctrl --> UI : 预约成功+编号
+    UI --> Owner : 显示预约结果
+else 时段满额
+    Lib --> Ctrl : 满额
+    Ctrl --> UI : 显示满额提示
+    alt 业主选择候补
+        Owner -> UI : 加入候补
+        UI -> Ctrl : joinWaitlist()
+        Ctrl -> WL : addEntry(petId, date, timeSlot, zone)
+        WL --> Ctrl : 候补位置
+        Ctrl --> UI : 候补已登记
+        UI --> Owner : 显示候补状态
+    else 业主放弃
+        Owner -> UI : 结束操作
+    end
+end
+deactivate Ctrl
+@enduml

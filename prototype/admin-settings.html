@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>系统参数设置 · 智慧社区宠物管理系统</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="container-narrow">
+  <h1 style="font-size:24px;font-weight:700;margin-bottom:6px">⚙️ 系统参数设置</h1>
+  <p class="text-gray" style="margin-bottom:28px">配置遛狗区运营规则、年审策略和消息提醒参数。修改后立即生效。</p>
+
+  <form id="settings" onsubmit="return false">
+    <!-- 遛狗区参数 -->
+    <div class="card" style="margin-bottom:20px">
+      <h3 class="card-title">🐕 遛狗区运营参数</h3>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">开放开始时间</label>
+          <input type="time" class="form-input" value="07:00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">开放结束时间</label>
+          <input type="time" class="form-input" value="21:00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">时段间隔（分钟）</label>
+          <input type="number" class="form-input" value="30">
+        </div>
+        <div class="form-group">
+          <label class="form-label">小型犬区容量（只/时段）</label>
+          <input type="number" class="form-input" value="10">
+        </div>
+        <div class="form-group">
+          <label class="form-label">大型犬区容量（只/时段）</label>
+          <input type="number" class="form-input" value="6">
+        </div>
+        <div class="form-group">
+          <label class="form-label">预约开始前取消截止（分钟）</label>
+          <input type="number" class="form-input" value="30" placeholder="30">
+        </div>
+      </div>
+    </div>
+
+    <!-- 年审参数 -->
+    <div class="card" style="margin-bottom:20px">
+      <h3 class="card-title">📅 年审与电子证参数</h3>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">电子证有效期（天）</label>
+          <input type="number" class="form-input" value="365">
+        </div>
+        <div class="form-group">
+          <label class="form-label">年审提醒提前（天）</label>
+          <input type="number" class="form-input" value="30">
+        </div>
+        <div class="form-group">
+          <label class="form-label">审核最长处理时间（天）</label>
+          <input type="number" class="form-input" value="7">
+        </div>
+      </div>
+    </div>
+
+    <!-- 违规参数 -->
+    <div class="card" style="margin-bottom:20px">
+      <h3 class="card-title">⚠️ 违规与冻结参数</h3>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">违规统计周期（天）</label>
+          <input type="number" class="form-input" value="365">
+        </div>
+        <div class="form-group">
+          <label class="form-label">冻结阈值（次）</label>
+          <input type="number" class="form-input" value="3">
+        </div>
+      </div>
+    </div>
+
+    <!-- 外部集成 -->
+    <div class="card" style="margin-bottom:20px">
+      <h3 class="card-title">📡 外部消息平台配置</h3>
+      <div class="form-group">
+        <label class="form-label">消息推送渠道</label>
+        <select class="form-select">
+          <option>微信公众号 + 短信</option>
+          <option>仅短信</option>
+          <option>仅微信公众号</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">服务状态</label>
+        <div style="display:flex;gap:12px;margin-top:4px">
+          <label><input type="checkbox" checked> 启用年审提醒</label>
+          <label><input type="checkbox" checked> 启用候补通知</label>
+          <label><input type="checkbox" checked> 启用预约确认</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-12" style="justify-content:flex-end">
+      <button type="button" class="btn btn-outline" onclick="location.reload()">重置</button>
+      <button type="button" class="btn btn-primary" onclick="save()">💾 保存所有设置</button>
+    </div>
+  </form>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+injectNavbar('reviewer');
+function save() {
+  showModal('保存成功', '所有系统参数已更新，修改已即时生效。', null, '好的');
+}
+</script>
+</body>
+</html>

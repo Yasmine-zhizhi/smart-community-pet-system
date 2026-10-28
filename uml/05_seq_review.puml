@@ -1,0 +1,25 @@
+@startuml
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor "物业审核员" as Reviewer
+participant "ReviewUI" as UI
+participant "PetManager" as Ctrl
+participant "PetLib" as Lib
+participant "消息平台" as MSG
+
+Reviewer -> UI : 打开待审核列表
+UI -> Lib : listPendingApplications()
+Lib --> UI : 返回待审核列表
+
+Reviewer -> UI : 选择申请\n点击"审核通过"
+UI -> Ctrl : approveApplication(appId)
+Ctrl -> Lib : updateStatus(appId, APPROVED)
+Ctrl -> Lib : createCertificate(petId, 有效期365天)
+Lib --> Ctrl : 成功
+Ctrl -> MSG : 推送审核通过通知
+Ctrl --> UI : 审核通过
+UI --> Reviewer : 显示审核成功
+
+note right: 也可"要求补交"或"驳回"
+@enduml

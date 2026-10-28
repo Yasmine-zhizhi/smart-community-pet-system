@@ -1,0 +1,22 @@
+@startuml
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor "业主" as Owner
+participant "PetProfileUI" as UI
+participant "PetManager" as Ctrl
+participant "PetLib" as Lib
+
+Owner -> UI : 打开宠物档案
+UI -> Ctrl : getPetList(ownerId)
+Ctrl -> Lib : queryByOwner(ownerId)
+Lib --> Ctrl : 返回宠物列表
+Ctrl --> UI : 宠物列表+电子证状态
+
+Owner -> UI : 点击某只宠物
+UI -> Ctrl : getPetDetail(petId)
+Ctrl -> Lib : queryById(petId)
+Lib --> Ctrl : 宠物详情+电子证有效期
+Ctrl --> UI : 完整信息
+UI --> Owner : 显示宠物档案与电子证
+@enduml

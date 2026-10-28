@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>审核管理 · 智慧社区宠物管理系统</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="container">
+  <div class="card-header">
+    <div>
+      <h1 style="font-size:24px;font-weight:700;margin-bottom:4px">✅ 审核管理</h1>
+      <p class="text-gray" id="headerStats" style="font-size:14px"></p>
+    </div>
+    <div class="flex gap-8">
+      <button class="btn btn-outline btn-sm" id="tabAll" onclick="switchTab('ALL')">全部</button>
+      <button class="btn btn-primary btn-sm" id="tabPending" onclick="switchTab('PENDING')">待审核</button>
+      <button class="btn btn-outline btn-sm" id="tabSupplement" onclick="switchTab('SUPPLEMENT')">补交中</button>
+    </div>
+  </div>
+
+  <div id="list"></div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+injectNavbar('reviewer');
+let currentTab = 'ALL';
+
+function render() {
+  const d = data();
+  const pendingCount = d.applications.filter(a=>a.status==='PENDING').length;
+  const supplementCount = d.applications.filter(a=>a.status==='SUPPLEMENT').length;
+
+  // 动态更新头部统计（修复原 bug：模板字符串直接写在 HTML 里）
+  document.getElementById('headerStats').textContent =
+    `待审核申请 ${pendingCount} 条 · 补交中 ${supplementCount} 条 · 共 ${d.applications.length} 条`;
+
+  document.getElementById('tabAll').textContent     = `全部（${d.applications.length}）`;
+  document.getElementById('tabPending').textContent  = `待审核（${pendingCount}）`;
+  document.getElementById('tabSupplement').textContent = `补交中（${supplementCount}）`;
+
+  // Tab 高亮
+  document.getElementById('tabAll').className     = 'btn btn-' + (currentTab==='ALL'?'primary':'outline') + ' btn-sm';
+  document.getElementById('tabPending').className  = 'btn btn-' + (currentTab==='PENDING'?'primary':'outline') + ' btn-sm';
+  document.getElementById('tabSupplement').className = 'btn btn-' + (currentTab==='SUPPLEMENT'?'primary':'outline') + ' btn-sm';
+
+  // 列表渲染
+  let filtered = d.applications;
+  if (currentTab !== 'ALL') filtered = d.applications.filter(a => a.status === currentTab);
+
+  document.getElementById('list').innerHTML = filtered.length === 0
+    ? '<div class="card"><p class="text-gray" style="text-align:center;padding:20px">没有符合条件的申请 🎉</p></div>'
+    : filtered.map(app => {
+        const typeLabel = app.type==='DOG'?'犬类登记':app.type==='CAT'?'猫类登记':'年审申请';
+        const statusBadge = app.status==='PENDING'
+          ? '<span class="badge badge-warning">📋 待审核</span>'
+          : app.status==='SUPPLEMENT'
+            ? '<span class="badge badge-info">📎 待补交</span>'
+            : app.status==='APPROVED'
+              ? '<span class="badge badge-success">✅ 已通过</span>'
+              : '<span class="badge badge-gray">❌ 已驳回</span>';
+        const canAct = app.status === 'PENDING' || app.status === 'SUPPLEMENT';
+        const actions = canAct ? `
+          <button class="btn btn-success btn-sm" onclick="doAction('${app.id}','APPROVED')">✅ 审核通过</button>
+          <button class="btn btn-warning btn-sm" onclick="doAction('${app.id}','SUPPLEMENT')">📎 要求补交</button>
+          <button class="btn btn-danger btn-sm" onclick="doAction('${app.id}','REJECTED')">❌ 驳回</button>
+        ` : '<span class="text-gray" style="font-size:12px">已完成审核</span>';
+        return `
+        <div class="review-card">
+          <div class="review-avatar">${app.type==='DOG'?'🐕':app.type==='CAT'?'🐈':'🔄'}</div>
+          <div class="review-body">
+            <div class="review-title">
+              ${typeLabel}：${app.petName}（${app.breed}）
+              <span style="margin-left:10px">${statusBadge}</span>
+            </div>
+            <div class="review-meta">申请人：${app.owner}（${app.phone}）· 提交时间：${app.submittedAt} · 编号：${app.id}</div>
+            <div style="color:var(--gray-600);font-size:13px;margin-top:6px">已上传材料：犬只登记证明 ✅ · 疫苗材料 ✅</div>
+            <div class="review-actions">${actions}</div>
+          </div>
+        </div>`;
+      }).join('');
+}
+
+function switchTab(tab) { currentTab = tab; render(); }
+
+function doAction(id, act) {
+  const map = { APPROVED:'审核通过', SUPPLEMENT:'要求补交', REJECTED:'驳回' };
+  const msg = act==='SUPPLEMENT' ? '请填写补交理由（模拟）' : act==='REJECTED' ? '请填写驳回理由（模拟）' : '通过后将联动更新宠物电子证状态';
+  showModal('确认' + map[act] + '？', msg,
+    () => { reviewApplication(id, act); render(); }, '确认');
+}
+
+render();
+</script>
+</body>
+</html>

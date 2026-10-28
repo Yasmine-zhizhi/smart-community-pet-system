@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>我的预约 · 智慧社区宠物管理系统</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="container">
+  <div class="card-header">
+    <div>
+      <h1 style="font-size:24px;font-weight:700;margin-bottom:4px">📅 我的预约</h1>
+      <p class="text-gray" style="font-size:14px">共 3 条记录 · 开始前可随时取消</p>
+    </div>
+    <a href="owner-reserve.html" class="btn btn-primary">+ 新预约</a>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>预约编号</th><th>宠物</th><th>日期</th><th>时段</th>
+          <th>区域</th><th>状态</th><th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="resBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+injectNavbar('owner');
+const petMap = Object.fromEntries(data().pets.map(p => [p.id, p]));
+
+function render() {
+  document.getElementById('resBody').innerHTML = data().reservations.map(r => {
+    const pet = petMap[r.petId] || {};
+    const canCancel = r.status === 'CONFIRMED';
+    return `<tr>
+      <td style="font-weight:500;font-family:monospace">${r.id}</td>
+      <td>${pet.type==='DOG'?'🐕':'🐈'} ${pet.name}</td>
+      <td>${r.date}</td>
+      <td>${r.slot}</td>
+      <td>${r.zoneName}</td>
+      <td><span class="badge ${reserveStatusBadge(r.status)}">${reserveStatusLabel(r.status)}</span></td>
+      <td>${canCancel
+          ? `<button class="btn btn-danger btn-sm" onclick="cancelRes('${r.id}')">取消预约</button>`
+          : '<span class="text-gray" style="font-size:12px">—</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function cancelRes(id) {
+  showModal('确认取消？', '取消后名额将自动释放，不能恢复确认，需重新预约。',
+    () => { cancelReservation(id); render(); }, '确认取消');
+}
+render();
+</script>
+</body>
+</html>
